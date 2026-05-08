@@ -1,0 +1,83 @@
+name: Build PHAR
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Git tag to attach PHAR to (leave empty for artifact only)
+        required: false
+        type: string
+
+  workflow_call:
+    inputs:
+      tag_name:
+        description: Git tag to attach PHAR to
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build PHAR
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.tag_name || github.ref }}
+        fetch-tags: true
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        ini-values: phar.readonly=0
+        coverage: none
+
+    - name: Get Composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: Install dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+
+    - name: Build PHAR
+      run: php build.php
+      env:
+        BUILD_VERSION: ${{ inputs.tag_name }}
+
+    - name: Test PHAR
+      run: |
+        ./build/oce-manage-users.phar --version
+        ./build/oce-manage-users.phar --help
+
+    - name: Create versioned PHAR
+      if: inputs.tag_name
+      run: cp build/oce-manage-users.phar "build/oce-manage-users-${{ inputs.tag_name }}.phar"
+
+    - name: Upload PHAR to release
+      if: inputs.tag_name
+      uses: softprops/action-gh-release@v3
+      with:
+        tag_name: ${{ inputs.tag_name }}
+        files: |
+          build/oce-manage-users.phar
+          build/oce-manage-users-${{ inputs.tag_name }}.phar
+
+    - name: Upload PHAR artifact (manual trigger)
+      if: ${{ !inputs.tag_name }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: oce-manage-users-phar
+        path: build/oce-manage-users.phar
+        retention-days: 90

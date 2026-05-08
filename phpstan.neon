@@ -1,0 +1,26 @@
+parameters:
+    level: 9
+    paths:
+        - src
+        - bin
+
+    phpVersion: 80200
+
+    excludePaths:
+        - vendor
+
+    checkMissingCallableSignature: true
+    checkUninitializedProperties: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+
+    reportAlwaysTrueInLastCondition: true
+
+    ignoreErrors:
+        # OpenEMR global functions are not always available during static analysis
+        # reportUnmatched: false lets CI pass when OpenEMR IS installed (function_exists guards)
+        - message: '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray|sqlInsert|privQuery|privStatement|generate_uuid) not found#'
+          reportUnmatched: false
+
+        # OpenEMR classes are loaded only after globals.php is required at runtime
+        - message: '#OpenEMR#'
+          reportUnmatched: false

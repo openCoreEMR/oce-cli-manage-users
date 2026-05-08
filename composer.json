@@ -1,0 +1,153 @@
+{
+    "name": "opencoreemr/oce-cli-manage-users",
+    "description": "OpenEMR CLI tool for managing users (reset password, create, list, activate, unlock), by OpenCoreEMR Inc",
+    "license": "GPL-3.0-or-later",
+    "type": "library",
+    "keywords": [
+        "openemr",
+        "cli",
+        "users",
+        "password",
+        "administration",
+        "healthcare"
+    ],
+    "authors": [
+        {
+            "name": "Michael A. Smith",
+            "email": "michael@opencoreemr.com",
+            "homepage": "https://opencoreemr.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://opencoreemr.com",
+    "support": {
+        "email": "support@opencoreemr.com",
+        "issues": "https://github.com/opencoreemr/oce-cli-manage-users/issues",
+        "source": "https://github.com/opencoreemr/oce-cli-manage-users"
+    },
+    "require": {
+        "php": ">=8.2.0",
+        "symfony/console": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.44",
+        "openemr/openemr": ">=7.0.2 || 7.0.3.x-dev || 7.0.4.x-dev || dev-master",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0",
+        "rector/rector": "^2.0",
+        "squizlabs/php_codesniffer": "^4.0"
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.2",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-702"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.3.x-dev",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-703"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.4.x-dev",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-704"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "dev-master",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "master"
+                }
+            }
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "OpenCoreEMR\\CLI\\ManageUsers\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OpenCoreEMR\\CLI\\ManageUsers\\Tests\\": "tests/"
+        }
+    },
+    "bin": [
+        "bin/oce-manage-users"
+    ],
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true,
+            "php-http/discovery": false
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "_comment": "Composer scripts cover code quality checks portable across local/Docker/CI. Use Taskfile for infrastructure (Docker, PHAR build).",
+        "check": [
+            "@php-lint",
+            "@phpcs",
+            "@phpstan",
+            "@rector"
+        ],
+        "fix": [
+            "@phpcbf",
+            "@rector-fix"
+        ],
+        "php-lint": "git ls-files -z '*.php' | xargs -0 -n1 php -l",
+        "phpcbf": "phpcbf",
+        "phpcs": "phpcs",
+        "phpstan": "phpstan --memory-limit=512M analyse",
+        "phpunit": "phpunit --testdox",
+        "rector": "rector process --dry-run",
+        "rector-fix": "rector process",
+        "test": "@phpunit"
+    }
+}

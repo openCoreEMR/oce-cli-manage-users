@@ -1,0 +1,64 @@
+# https://taskfile.dev
+# Task runner for oce-cli-manage-users.
+#
+# Composer scripts cover code-quality (work in any environment).
+# Taskfile covers infrastructure (Docker, PHAR build, container exec wrappers).
+
+version: '3'
+
+vars:
+  CLI_PHAR: build/oce-manage-users.phar
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+    - task --list
+
+  # === Code quality (delegates to composer) ===
+
+  check:
+    desc: Run all code-quality checks
+    cmds:
+    - composer check
+
+  fix:
+    desc: Auto-fix what can be fixed
+    cmds:
+    - composer fix
+
+  test:
+    desc: Run unit tests
+    cmds:
+    - composer phpunit
+
+  # === PHAR build ===
+
+  phar:build:
+    desc: Build the PHAR
+    cmds:
+    - php -d phar.readonly=0 build.php
+
+  phar:test:
+    desc: Smoke-test the built PHAR
+    deps: [phar:build]
+    cmds:
+    - '{{.CLI_PHAR}} --version'
+    - '{{.CLI_PHAR}} list'
+
+  phar:clean:
+    desc: Remove the build directory
+    cmds:
+    - rm -rf build
+
+  # === Docker exec helpers ===
+  # Convenience wrappers when running against an OpenEMR container.
+  # Pass DC=<service> and CONTAINER_PHAR=<path-inside-container> as needed.
+
+  exec:
+    desc: Run the PHAR inside the OpenEMR container. Usage - task exec -- user:list
+    vars:
+      DC: '{{.DC | default "openemr"}}'
+      CONTAINER_PHAR: '{{.CONTAINER_PHAR | default "/var/www/localhost/htdocs/openemr/oce-manage-users.phar"}}'
+    cmds:
+    - docker compose exec -T {{.DC}} php {{.CONTAINER_PHAR}} {{.CLI_ARGS}}
