@@ -32,6 +32,15 @@ class OpenEMRConnector
             return;
         }
 
+        // Site name becomes a filesystem path segment (sites/<site>/sqlconf.php)
+        // and is also written into $_GET. Restrict to a safe character set
+        // before either use to prevent path traversal during bootstrap.
+        if (preg_match('/^[A-Za-z0-9_-]+$/', $site) !== 1) {
+            throw new OpenEMRConnectorException(
+                "Invalid --site value; must match [A-Za-z0-9_-]+, got: {$site}"
+            );
+        }
+
         $this->openemrPath = rtrim($openemrPath, '/');
         $this->site = $site;
 

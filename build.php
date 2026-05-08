@@ -55,7 +55,10 @@ try {
     $phar->startBuffering();
 
     echo "Adding source files...\n";
-    $phar->buildFromDirectory(__DIR__, '/^(?!.*\/(?:build|tests|\.git|\.github|\.claude|\.phpunit\.cache)).*$/');
+    $phar->buildFromDirectory(
+        __DIR__,
+        '/^(?!.*\/(?:build|tests|tools|\.git|\.github|\.claude|\.phpunit\.cache)).*$/'
+    );
 
     $stub = "#!/usr/bin/env php\n" . $phar->createDefaultStub('bin/oce-manage-users');
     $phar->setStub($stub);

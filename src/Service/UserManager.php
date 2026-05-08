@@ -98,35 +98,45 @@ class UserManager
         $active = ($spec['active'] ?? true) ? 1 : 0;
         $email = $spec['email'] ?? null;
 
-        // Mirror the field shape from interface/usergroup/usergroup_admin.php:
-        // password column is the literal string 'NoLongerUsed'; the real hash
-        // lives in users_secure.password.
-        $userId = sqlInsert(
-            "INSERT INTO users SET"
-            . " username = ?,"
-            . " password = 'NoLongerUsed',"
-            . " fname = ?,"
-            . " lname = ?,"
-            . " email = ?,"
-            . " authorized = ?,"
-            . " active = ?",
-            [$username, $spec['fname'], $spec['lname'], $email, $authorized, $active]
-        );
+        // Two-table create (users + users_secure, plus optional uuid backfill)
+        // wrapped in a transaction so a failure on the secondary writes doesn't
+        // leave an orphaned users row with no credential.
+        sqlBeginTrans();
+        try {
+            // Mirror the field shape from interface/usergroup/usergroup_admin.php:
+            // password column is the literal string 'NoLongerUsed'; the real hash
+            // lives in users_secure.password.
+            $userId = sqlInsert(
+                "INSERT INTO users SET"
+                . " username = ?,"
+                . " password = 'NoLongerUsed',"
+                . " fname = ?,"
+                . " lname = ?,"
+                . " email = ?,"
+                . " authorized = ?,"
+                . " active = ?",
+                [$username, $spec['fname'], $spec['lname'], $email, $authorized, $active]
+            );
 
-        if (!is_int($userId) || $userId <= 0) {
-            throw new ManageUsersException("Failed to insert into users for {$username}");
+            if (!is_int($userId) || $userId <= 0) {
+                throw new ManageUsersException("Failed to insert into users for {$username}");
+            }
+
+            sqlStatement(
+                "INSERT INTO users_secure SET"
+                . " id = ?,"
+                . " username = ?,"
+                . " password = ?,"
+                . " last_update_password = NOW()",
+                [$userId, $username, $hash]
+            );
+
+            $this->assignUuidIfPossible($userId);
+        } catch (\Throwable $e) {
+            sqlRollbackTrans();
+            throw $e;
         }
-
-        sqlStatement(
-            "INSERT INTO users_secure SET"
-            . " id = ?,"
-            . " username = ?,"
-            . " password = ?,"
-            . " last_update_password = NOW()",
-            [$userId, $username, $hash]
-        );
-
-        $this->assignUuidIfPossible($userId);
+        sqlCommitTrans();
 
         return $userId;
     }

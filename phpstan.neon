@@ -28,5 +28,5 @@ parameters:
         # live in library/sql.inc.php — not on any PSR-4 path — so they remain
         # unresolved even after the sub-vendor autoload bootstrap.
         # reportUnmatched: false keeps this passive when symbols ARE resolved.
-        - message: '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray|sqlInsert|privQuery|privStatement|generate_uuid) not found#'
+        - message: '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray|sqlInsert|sqlBeginTrans|sqlCommitTrans|sqlRollbackTrans|privQuery|privStatement|generate_uuid) not found#'
           reportUnmatched: false

@@ -4,8 +4,10 @@
  * Shared base for the user:* commands.
  *
  * Centralizes the --openemr-path / --site options, the OpenEMR bootstrap, and
- * the boilerplate that turns thrown ManageUsersException-family errors into
- * non-zero exits with a clear stderr message.
+ * the boilerplate that turns any thrown Throwable (including unexpected
+ * programming errors and OpenEMR runtime failures) into a non-zero exit with
+ * a clear stderr message — appropriate for a CLI where an uncaught stack trace
+ * to the operator's terminal would be worse than a one-line summary.
  *
  * @package   OpenCoreEMR\CLI\ManageUsers
  * @link      https://opencoreemr.com
