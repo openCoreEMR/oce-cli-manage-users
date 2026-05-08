@@ -1,0 +1,25 @@
+{
+  "output": "build/oce-manage-users.phar",
+  "chmod": "0755",
+  "directories": [
+    "src"
+  ],
+  "files": [
+    "bin/oce-manage-users"
+  ],
+  "finder": [
+    {
+      "name": "*.php",
+      "exclude": [
+        "Tests"
+      ],
+      "in": "vendor"
+    }
+  ],
+  "compactors": [
+    "KevinGH\\Box\\Compactor\\Php"
+  ],
+  "compression": "GZ",
+  "main": "bin/oce-manage-users",
+  "shebang": "#!/usr/bin/env php"
+}

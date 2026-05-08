@@ -1,0 +1,48 @@
+name: dclint
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - '**/docker-compose*.yml'
+    - '**/docker-compose*.yaml'
+    - compose.yml
+    - compose.yaml
+  pull_request:
+    branches:
+    - main
+    paths:
+    - '**/docker-compose*.yml'
+    - '**/docker-compose*.yaml'
+    - compose.yml
+    - compose.yaml
+
+jobs:
+  dclint:
+    name: Lint Docker Compose files
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+
+    - name: Install dclint
+      run: npm install -g dclint
+
+    - name: Run dclint
+      run: |
+        git ls-files -z 'compose.yml' \
+                        'compose.yaml' \
+                        'docker-compose*.yml' \
+                        'docker-compose*.yaml' \
+                        '**/compose.yml' \
+                        '**/compose.yaml' \
+                        '**/docker-compose*.yml' \
+                        '**/docker-compose*.yaml' |
+        xargs --null --no-run-if-empty dclint

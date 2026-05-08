@@ -1,0 +1,9 @@
+/vendor/
+/build/
+/.phpunit.cache/
+/composer.lock
+/.idea/
+/.vscode/
+*.phar
+/tools/openemr/vendor/
+/tools/openemr/composer.lock

@@ -1,0 +1,68 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Standalone CLI tool for managing OpenEMR users
+ *
+ * @package   OpenCoreEMR\CLI\ManageUsers
+ * @link      https://opencoreemr.com
+ * @author    Michael A. Smith <michael@opencoreemr.com>
+ * @copyright Copyright (c) 2026 OpenCoreEMR Inc
+ * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
+ */
+
+declare(strict_types=1);
+
+if (php_sapi_name() !== 'cli') {
+    fwrite(STDERR, "This tool can only be run from the command line\n");
+    exit(1);
+}
+
+if (\Phar::running() !== '') {
+    require_once \Phar::running() . '/vendor/autoload.php';
+} else {
+    $autoloadPaths = [
+        __DIR__ . '/../vendor/autoload.php',
+        __DIR__ . '/../../../autoload.php',
+        __DIR__ . '/../../../../autoload.php',
+        __DIR__ . '/../../../../../autoload.php',
+    ];
+
+    $autoloadFound = false;
+    foreach ($autoloadPaths as $autoloadPath) {
+        if (file_exists($autoloadPath)) {
+            require_once $autoloadPath;
+            $autoloadFound = true;
+            break;
+        }
+    }
+
+    if (!$autoloadFound) {
+        fwrite(STDERR, "Could not find vendor/autoload.php. Run 'composer install' first.\n");
+        exit(1);
+    }
+}
+
+use OpenCoreEMR\CLI\ManageUsers\Command\ActivateCommand;
+use OpenCoreEMR\CLI\ManageUsers\Command\CreateCommand;
+use OpenCoreEMR\CLI\ManageUsers\Command\ListCommand;
+use OpenCoreEMR\CLI\ManageUsers\Command\ResetPasswordCommand;
+use OpenCoreEMR\CLI\ManageUsers\Command\UnlockCommand;
+use Symfony\Component\Console\Application;
+
+$version = 'dev';
+if (\Phar::running() !== '') {
+    /** @var array<string, string>|false $metadata */
+    $metadata = (new \Phar(\Phar::running(false)))->getMetadata();
+    if (is_array($metadata) && isset($metadata['version'])) {
+        $version = (string) $metadata['version'];
+    }
+}
+
+$application = new Application('oce-manage-users', $version);
+$application->add(new ResetPasswordCommand());
+$application->add(new CreateCommand());
+$application->add(new ListCommand());
+$application->add(new ActivateCommand());
+$application->add(new UnlockCommand());
+exit($application->run());

@@ -1,0 +1,70 @@
+# Local dev compose for oce-cli-manage-users.
+#
+# Extends the OpenEMR-bundled development-easy stack from the sub-vendor
+# (tools/openemr/vendor/openemr/openemr) so the OpenEMR install lives in the
+# container, never on the root autoload of this CLI. See tools/openemr/README.md
+# for the rationale (opencoreemr/oce-module-template#20).
+#
+# Random loopback ports avoid colliding with other dev stacks running locally.
+#
+# Usage:
+#   task tools:install         # one-shot: pull openemr/openemr into tools/openemr/vendor
+#   task dev:start             # bring up openemr + mysql; CLI source mounted at $CLI_PATH
+#   task dev:port              # show the assigned host port for OpenEMR
+#   task exec -- user:list     # run a CLI command inside the container
+
+name: oce-cli-manage-users
+
+services:
+  mysql:
+    ports: !override
+      - target: 3306
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: host
+    extends:
+      file: tools/openemr/vendor/openemr/openemr/docker/development-easy/docker-compose.yml
+      service: mysql
+
+  openemr:
+    volumes:
+      - .:/var/www/localhost/htdocs/openemr/oce-cli-manage-users:rw
+    ports: !override
+      - target: 80
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: host
+      - target: 443
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-fsk", "https://localhost:443/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 3m
+    extends:
+      file: tools/openemr/vendor/openemr/openemr/docker/development-easy/docker-compose.yml
+      service: openemr
+
+  phpmyadmin:
+    ports: !override
+      - target: 80
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: host
+    extends:
+      file: tools/openemr/vendor/openemr/openemr/docker/development-easy/docker-compose.yml
+      service: phpmyadmin
+
+volumes:
+  databasevolume: {}
+  assetvolume: {}
+  themevolume: {}
+  sitesvolume: {}
+  nodemodules: {}
+  vendordir: {}
+  ccdanodemodules: {}
+  logvolume: {}
+  couchdbvolume: {}

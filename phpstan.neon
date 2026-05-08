@@ -1,0 +1,32 @@
+parameters:
+    level: 9
+    paths:
+        - src
+        - bin
+
+    phpVersion: 80200
+
+    bootstrapFiles:
+        # Resolve OpenEMR\… symbols against the sub-vendor copy, kept out of the
+        # root vendor to avoid runtime autoload-shadowing in dev (see
+        # tools/openemr/README.md). The "composer phpstan" script auto-installs
+        # this if missing.
+        - tools/openemr/vendor/autoload.php
+
+    excludePaths:
+        - vendor
+        - tools/openemr/vendor
+
+    checkMissingCallableSignature: true
+    checkUninitializedProperties: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+
+    reportAlwaysTrueInLastCondition: true
+
+    ignoreErrors:
+        # OpenEMR global SQL helpers (sqlQuery, sqlStatement, sqlInsert, ...)
+        # live in library/sql.inc.php — not on any PSR-4 path — so they remain
+        # unresolved even after the sub-vendor autoload bootstrap.
+        # reportUnmatched: false keeps this passive when symbols ARE resolved.
+        - message: '#Function (xlt|xla|xlj|text|attr|sqlStatement|sqlQuery|sqlFetchArray|sqlInsert|sqlBeginTrans|sqlCommitTrans|sqlRollbackTrans|privQuery|privStatement|generate_uuid) not found#'
+          reportUnmatched: false
