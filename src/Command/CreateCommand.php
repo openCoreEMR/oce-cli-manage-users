@@ -40,19 +40,30 @@ class CreateCommand extends AbstractUserCommand
                 'Mark as authorized provider (default: false)',
                 false
             )
-            ->addOption('active', null, InputOption::VALUE_NEGATABLE, 'Mark as active (default: true)', true);
+            ->addOption('active', null, InputOption::VALUE_NEGATABLE, 'Mark as active (default: true)', true)
+            ->addOption(
+                'group',
+                null,
+                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                'ACL group title to add the user to (repeatable). Required unless --authorized is set,'
+                . ' in which case it defaults to Administrators.'
+            );
     }
 
     protected function doExecute(InputInterface $input, SymfonyStyle $io): int
     {
+        $authorized = (bool) $input->getOption('authorized');
+        $groups = $this->resolveGroups($input, $authorized);
+
         $spec = [
             'username' => $this->requiredString($input, 'username'),
             'password' => $this->requiredString($input, 'password'),
             'fname' => $this->requiredString($input, 'firstname'),
             'lname' => $this->requiredString($input, 'lastname'),
             'email' => $this->optionalString($input, 'email'),
-            'authorized' => (bool) $input->getOption('authorized'),
+            'authorized' => $authorized,
             'active' => (bool) $input->getOption('active'),
+            'groups' => $groups,
         ];
 
         $userId = $this->users->create($spec);
@@ -68,6 +79,34 @@ class CreateCommand extends AbstractUserCommand
             throw new ManageUsersException("--{$option} is required");
         }
         return $value;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolveGroups(InputInterface $input, bool $authorized): array
+    {
+        /** @var list<mixed> $raw */
+        $raw = (array) $input->getOption('group');
+        $groups = [];
+        foreach ($raw as $value) {
+            if (!is_string($value) || $value === '') {
+                throw new ManageUsersException('--group values must be non-empty strings');
+            }
+            $groups[] = $value;
+        }
+
+        if (count($groups) === 0) {
+            if (!$authorized) {
+                throw new ManageUsersException(
+                    '--group is required (repeatable) so the new user is registered in the ACL system'
+                    . ' and can log in. Pass --authorized to default to Administrators.'
+                );
+            }
+            $groups[] = 'Administrators';
+        }
+
+        return $groups;
     }
 
     private function optionalString(InputInterface $input, string $option): ?string

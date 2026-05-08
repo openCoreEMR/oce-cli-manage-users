@@ -77,6 +77,7 @@ class UserManager
      *     email?: ?string,
      *     authorized?: bool,
      *     active?: bool,
+     *     groups?: list<string>,
      * } $spec
      */
     public function create(array $spec): int
@@ -132,6 +133,16 @@ class UserManager
             );
 
             $this->assignUuidIfPossible($userId);
+
+            $groups = $spec['groups'] ?? [];
+            if (count($groups) > 0) {
+                $this->registerAclGroups(
+                    $groups,
+                    $username,
+                    $spec['fname'],
+                    $spec['lname']
+                );
+            }
         } catch (\Throwable $e) {
             sqlRollbackTrans();
             throw $e;
@@ -139,6 +150,29 @@ class UserManager
         sqlCommitTrans();
 
         return $userId;
+    }
+
+    /**
+     * Register the user as an ARO and assign them to the named ACL groups.
+     *
+     * Mirrors the call shape used by interface/usergroup/usergroup_admin.php
+     * after a `users` insert. Without this step, the user has a valid
+     * credential but is rejected at login because they have no `gacl_aro` row.
+     *
+     * Extracted as a protected method so unit tests can override it without
+     * needing OpenEMR's ACL stack on the autoload path.
+     *
+     * @param list<string> $groups
+     */
+    protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+    {
+        if (!class_exists(\OpenEMR\Common\Acl\AclExtended::class)) {
+            throw new ManageUsersException(
+                "OpenEMR\\Common\\Acl\\AclExtended not available; OpenEMR bootstrap must run first"
+            );
+        }
+
+        \OpenEMR\Common\Acl\AclExtended::setUserAro($groups, $username, $fname, '', $lname);
     }
 
     /**

@@ -65,6 +65,7 @@ Updates `users_secure.password`, stamps `last_update_password = NOW()`, and clea
 Create a new user.
 
 ```bash
+# Authorized provider — defaults to the Administrators ACL group.
 oce-manage-users.phar user:create \
   --username=alice \
   --password='sekret' \
@@ -73,9 +74,28 @@ oce-manage-users.phar user:create \
   --email=alice@example.com \
   --authorized \
   --active
+
+# Non-authorized user — must specify at least one --group.
+oce-manage-users.phar user:create \
+  --username=bob \
+  --password='sekret' \
+  --firstname=Bob \
+  --lastname=Brown \
+  --group=Clinicians
+
+# Multiple groups — repeat --group.
+oce-manage-users.phar user:create \
+  --username=carol \
+  --password='sekret' \
+  --firstname=Carol \
+  --lastname=Carter \
+  --group=Administrators \
+  --group=Clinicians
 ```
 
-Defaults: `--active` is on, `--authorized` is off. Inserts into both `users` and `users_secure` and backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available.
+Defaults: `--active` is on, `--authorized` is off. Inserts into both `users` and `users_secure`, backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available, and registers the user in OpenEMR's ACL system (`gacl_aro` + `gacl_groups_aro_map`) via `AclExtended::setUserAro` so they can log in immediately.
+
+`--group=<title>` is repeatable. It is required unless `--authorized` is set, in which case it defaults to `Administrators`. Without this step the user has a valid credential but cannot log in — the ACL layer rejects them.
 
 ### `user:list`
 
