@@ -1,0 +1,84 @@
+{
+    "name": "opencoreemr/oce-cli-manage-users-tools-openemr",
+    "description": "Sub-composer that owns openemr/openemr for static analysis and dev-container layout, kept out of the root vendor to avoid OpenEMR autoload-shadowing in dev (see opencoreemr/oce-module-template#20).",
+    "license": "GPL-3.0-or-later",
+    "type": "project",
+    "require": {
+        "openemr/openemr": ">=7.0.2 || 7.0.3.x-dev || 7.0.4.x-dev || dev-master"
+    },
+    "repositories": [
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.2",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-702"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.3.x-dev",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-703"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "7.0.4.x-dev",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "rel-704"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "openemr/openemr",
+                "version": "dev-master",
+                "autoload": {
+                    "psr-4": {
+                        "OpenEMR\\": "src/"
+                    }
+                },
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/openemr/openemr.git",
+                    "reference": "master"
+                }
+            }
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}

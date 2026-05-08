@@ -27,13 +27,18 @@ jobs:
     - name: Cache Composer dependencies
       uses: actions/cache@v5
       with:
-        path: vendor
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+        path: |
+          vendor
+          tools/openemr/vendor
+        key: ${{ runner.os }}-composer-phpstan-${{ hashFiles('**/composer.json') }}
         restore-keys: |
-          ${{ runner.os }}-composer-
+          ${{ runner.os }}-composer-phpstan-
 
-    - name: Install dependencies
+    - name: Install dependencies (root)
       run: composer install --prefer-dist --no-progress --no-interaction
+
+    - name: Install dependencies (tools/openemr sub-vendor)
+      run: composer install --working-dir=tools/openemr --prefer-dist --no-progress --no-interaction
 
     - name: Run PHPStan
       run: composer phpstan

@@ -23,6 +23,17 @@ composer install
 ./bin/oce-manage-users list
 ```
 
+To smoke-test the CLI against a real OpenEMR install in Docker:
+
+```bash
+task tools:install     # one-time: pulls openemr/openemr into tools/openemr/vendor
+task dev:start         # bring up openemr + mysql + phpmyadmin (random loopback ports)
+task dev:port          # show the assigned host port
+task exec -- user:list # run any CLI subcommand inside the container
+```
+
+The CLI source is bind-mounted into the container at `/var/www/localhost/htdocs/openemr/oce-cli-manage-users`, so edits on the host are reflected immediately. See `Taskfile.yml` for the full task list.
+
 ## Usage
 
 Every command takes:
@@ -102,14 +113,14 @@ Sets `users_secure.login_fail_counter = 0`, `last_login_fail = NULL`, `auto_bloc
 
 ## Running against a docker compose stack
 
-Copy the PHAR into the running OpenEMR container, then exec it:
+For an existing stack of your own, copy the PHAR into the OpenEMR container and exec it:
 
 ```bash
 docker compose cp oce-manage-users.phar openemr:/tmp/oce-manage-users.phar
 docker compose exec -T openemr php /tmp/oce-manage-users.phar user:list
 ```
 
-Or mount it into the container in `compose.override.yml`:
+Or mount it into the container via a `compose.override.yml`:
 
 ```yaml
 services:
@@ -117,6 +128,8 @@ services:
     volumes:
     - ./oce-manage-users.phar:/usr/local/bin/oce-manage-users.phar:ro
 ```
+
+For local dev/iteration on this CLI itself, use the bundled `task dev:start` workflow described above — it brings up OpenEMR's `development-easy` stack with the CLI source bind-mounted in.
 
 ## Compatibility
 

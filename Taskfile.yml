@@ -2,12 +2,16 @@
 # Task runner for oce-cli-manage-users.
 #
 # Composer scripts cover code-quality (work in any environment).
-# Taskfile covers infrastructure (Docker, PHAR build, container exec wrappers).
+# Taskfile covers infrastructure: docker compose, the sub-vendor pull, PHAR
+# build, and the smoke-test wrappers that exec the CLI inside the container.
 
 version: '3'
 
 vars:
   CLI_PHAR: build/oce-manage-users.phar
+  # Path the CLI source is bind-mounted at inside the openemr container.
+  CONTAINER_CLI_DIR: /var/www/localhost/htdocs/openemr/oce-cli-manage-users
+  CONTAINER_CLI_BIN: /var/www/localhost/htdocs/openemr/oce-cli-manage-users/bin/oce-manage-users
 
 tasks:
   default:
@@ -32,15 +36,98 @@ tasks:
     cmds:
     - composer phpunit
 
+  # === Sub-vendor (openemr/openemr) ===
+
+  tools:install:
+    desc: Install openemr/openemr into tools/openemr/vendor (sub-composer)
+    cmds:
+    - composer install --working-dir=tools/openemr --no-interaction
+    status:
+    - test -f tools/openemr/vendor/autoload.php
+
+  tools:update:
+    desc: Update openemr/openemr in tools/openemr/vendor
+    cmds:
+    - composer update --working-dir=tools/openemr --no-interaction
+
+  tools:clean:
+    desc: Remove tools/openemr/vendor
+    cmds:
+    - rm -rf tools/openemr/vendor tools/openemr/composer.lock
+
+  # === Docker dev environment ===
+
+  dev:start:
+    desc: Start the OpenEMR dev stack (extends development-easy from sub-vendor)
+    deps: [tools:install]
+    cmds:
+    - docker compose up -d --wait
+    - echo "OpenEMR is up. Show port with 'task dev:port'."
+
+  dev:stop:
+    desc: Stop the dev stack (keeps data volumes)
+    cmds:
+    - docker compose down
+
+  dev:restart:
+    desc: Restart containers
+    cmds:
+    - docker compose restart
+
+  dev:reset:
+    desc: Stop and remove all data volumes (fresh OpenEMR install on next start)
+    prompt: This will delete ALL OpenEMR dev data. Continue?
+    cmds:
+    - docker compose down -v
+
+  dev:port:
+    desc: Show the assigned host port for OpenEMR
+    cmds:
+    - 'echo "OpenEMR HTTPS port:"'
+    - docker compose port openemr 443
+    - 'echo "Login: admin / pass"'
+
+  dev:logs:
+    desc: Tail OpenEMR logs
+    cmds:
+    - docker compose logs -f openemr
+
+  dev:browse:
+    desc: Open OpenEMR in your default browser
+    cmds:
+    - 'open "https://localhost:$(docker compose port openemr 443 | cut -d: -f2)/"'
+
+  # === In-container CLI execution ===
+
+  exec:
+    desc: Run a CLI subcommand inside the openemr container. Usage - task exec -- user:list
+    cmds:
+    - docker compose exec -T openemr php {{.CONTAINER_CLI_BIN}} {{.CLI_ARGS}}
+
+  exec:phar:
+    desc: Run the built PHAR inside the container (must build first via 'task phar:build')
+    deps: [phar:build]
+    cmds:
+    - docker compose exec -T openemr php {{.CONTAINER_CLI_DIR}}/{{.CLI_PHAR}} {{.CLI_ARGS}}
+
+  smoke:
+    desc: End-to-end smoke against the running container (lists users, resets admin's password)
+    cmds:
+    - docker compose exec -T openemr php {{.CONTAINER_CLI_BIN}} user:list
+    - docker compose exec -T openemr php {{.CONTAINER_CLI_BIN}} user:reset-password --user=admin --random
+    - docker compose exec -T openemr php {{.CONTAINER_CLI_BIN}} user:unlock --user=admin
+
   # === PHAR build ===
 
   phar:build:
-    desc: Build the PHAR
+    desc: Build the PHAR (no-dev install, then phar.readonly=0)
     cmds:
+    - composer install --no-dev --optimize-autoloader --no-interaction
     - php -d phar.readonly=0 build.php
+    - 'echo "Reinstall dev deps with: composer install"'
 
-  phar:test:
-    desc: Smoke-test the built PHAR
+  phar:smoke:
+    desc: Smoke-test the built PHAR locally (host, no docker)
     deps: [phar:build]
     cmds:
     - '{{.CLI_PHAR}} --version'
@@ -50,15 +137,3 @@ tasks:
     desc: Remove the build directory
     cmds:
     - rm -rf build
-
-  # === Docker exec helpers ===
-  # Convenience wrappers when running against an OpenEMR container.
-  # Pass DC=<service> and CONTAINER_PHAR=<path-inside-container> as needed.
-
-  exec:
-    desc: Run the PHAR inside the OpenEMR container. Usage - task exec -- user:list
-    vars:
-      DC: '{{.DC | default "openemr"}}'
-      CONTAINER_PHAR: '{{.CONTAINER_PHAR | default "/var/www/localhost/htdocs/openemr/oce-manage-users.phar"}}'
-    cmds:
-    - docker compose exec -T {{.DC}} php {{.CONTAINER_PHAR}} {{.CLI_ARGS}}

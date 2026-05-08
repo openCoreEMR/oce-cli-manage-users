@@ -23,21 +23,41 @@ src/
     UserNotFoundException.php
     UserAlreadyExistsException.php
 tests/Unit/Command/          # Mock-based tests for argument parsing, exit codes, output
+tools/openemr/               # Sub-composer that owns openemr/openemr (see below)
 ```
 
 The split: `OpenEMRConnector` owns the bootstrap; `UserManager` owns the DB API surface; commands own only argument parsing, output formatting, and exit codes. Commands inject both services so unit tests can mock them without touching OpenEMR.
 
+## Why `tools/openemr/` instead of root `require-dev`
+
+`openemr/openemr` lives under `tools/openemr/composer.json`, **not** in the root `composer.json`. If it were in the root, `vendor/openemr/openemr/src/` would land on the root PSR-4 autoload (`OpenEMR\\`) — which can shadow the OpenEMR install's own copy when this CLI is exercised inside a container that has OpenEMR also visible. Procedural `require_once` calls inside OpenEMR's classes then load the same `library/*.inc.php` file under a different absolute path, fataling with `Cannot redeclare`. See [oce-module-template#20](https://github.com/opencoreemr/oce-module-template/issues/20). `tools/openemr/README.md` covers the contract.
+
+PHPStan still resolves `OpenEMR\…` symbols via `bootstrapFiles: [tools/openemr/vendor/autoload.php]`. The `composer phpstan` script self-installs the sub-vendor if missing, so a fresh checkout doesn't have to remember the extra step.
+
 ## Running against a dev container
 
-Build the PHAR locally and exec it inside the container:
+The bundled `compose.yml` extends OpenEMR's bundled `development-easy` stack from `tools/openemr/vendor/openemr/openemr/docker/development-easy/docker-compose.yml`. The CLI source is bind-mounted into the openemr container at `/var/www/localhost/htdocs/openemr/oce-cli-manage-users` (rw), so host edits are visible immediately.
 
 ```bash
-task phar:build
-docker compose cp build/oce-manage-users.phar openemr:/tmp/oce-manage-users.phar
-docker compose exec -T openemr php /tmp/oce-manage-users.phar user:list
+task tools:install     # idempotent: installs openemr/openemr into tools/openemr/vendor
+task dev:start         # brings up openemr + mysql + phpmyadmin on random loopback ports
+task dev:port          # show host ports
+task exec -- user:list # invoke CLI subcommands inside the container
+task smoke             # quick end-to-end: list, reset-password --random, unlock for admin
 ```
 
-`task exec -- user:list` is the convenience wrapper (assumes the PHAR is at `/var/www/localhost/htdocs/openemr/oce-manage-users.phar`; override with `CONTAINER_PHAR=...`).
+`task exec -- <args>` runs `bin/oce-manage-users` (the source, via composer's `vendor/autoload.php` inside the bind mount) — fastest iteration loop. `task exec:phar -- <args>` builds and runs the PHAR instead — useful for catching PHAR-only bugs before release.
+
+## Compatibility testing across versions
+
+To smoke against a different OpenEMR version, edit `tools/openemr/composer.json`'s constraint, then:
+
+```bash
+task tools:clean
+task tools:install
+task dev:reset      # purges OpenEMR's data volumes
+task dev:start
+```
 
 ## Code-quality checks
 
