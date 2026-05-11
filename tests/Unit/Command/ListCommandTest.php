@@ -72,6 +72,25 @@ class ListCommandTest extends TestCase
     }
 
     #[Test]
+    public function nonScalarColumnValueThrows(): void
+    {
+        $this->users->expects(self::once())
+            ->method('listUsers')
+            ->willReturn([
+                [
+                    'id' => 1, 'username' => 'admin', 'fname' => 'Ad', 'lname' => 'Min',
+                    'active' => 1, 'authorized' => ['unexpected', 'array'],
+                    'last_update_password' => '2026-01-01 00:00:00', 'login_fail_counter' => 0,
+                ],
+            ]);
+
+        $exit = $this->tester->execute([]);
+
+        self::assertSame(1, $exit);
+        self::assertStringContainsString('non-scalar column value', $this->tester->getDisplay());
+    }
+
+    #[Test]
     public function lockedFlagPropagates(): void
     {
         $this->users->expects(self::once())
