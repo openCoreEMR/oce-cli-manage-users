@@ -55,10 +55,14 @@ try {
     $phar->startBuffering();
 
     echo "Adding source files...\n";
-    $phar->buildFromDirectory(
-        __DIR__,
-        '/^(?!.*\/(?:build|tests|tools|\.git|\.github|\.claude|\.phpunit\.cache)).*$/'
+    $excludedNames = ['build', 'tests', 'tools', '.git', '.github', '.claude', '.phpunit.cache', 'build.php'];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveCallbackFilterIterator(
+            new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS),
+            static fn (SplFileInfo $file): bool => !in_array($file->getFilename(), $excludedNames, true)
+        )
     );
+    $phar->buildFromIterator($iterator, __DIR__);
 
     $stub = "#!/usr/bin/env php\n" . $phar->createDefaultStub('bin/oce-manage-users');
     $phar->setStub($stub);
