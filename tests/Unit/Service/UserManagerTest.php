@@ -228,6 +228,173 @@ class UserManagerTest extends TestCase
     }
 
     #[Test]
+    public function createInvokesAclRegistrationWhenGroupsProvided(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 55;
+
+        $captured = null;
+        $users = new class ($captured) extends UserManager {
+            /** @param array{groups: list<string>, username: string, fname: string, lname: string}|null $captured */
+            public function __construct(public ?array &$captured)
+            {
+            }
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                $this->captured = [
+                    'groups' => $groups,
+                    'username' => $username,
+                    'fname' => $fname,
+                    'lname' => $lname,
+                ];
+            }
+        };
+
+        $id = $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'Alice',
+            'lname' => 'Liddell',
+            'authorized' => true,
+            'groups' => ['Administrators', 'Clinicians'],
+        ]);
+
+        self::assertSame(55, $id);
+        self::assertSame(1, SqlSpy::$commitCount);
+        self::assertSame(0, SqlSpy::$rollbackCount);
+        self::assertSame(
+            [
+                'groups' => ['Administrators', 'Clinicians'],
+                'username' => 'alice',
+                'fname' => 'Alice',
+                'lname' => 'Liddell',
+            ],
+            $captured
+        );
+    }
+
+    #[Test]
+    public function createInsertsLegacyGroupsRowWhenLegacyGroupProvided(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 60;
+
+        $users = new class extends UserManager {
+            // Skip the real ACL stack — covered separately above.
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+            }
+        };
+
+        $id = $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'A',
+            'lname' => 'L',
+            'groups' => ['Administrators'],
+            'legacyGroup' => 'Default',
+        ]);
+
+        self::assertSame(60, $id);
+
+        $statements = SqlSpy::callsOf('sqlStatement');
+        // users_secure + legacy `groups` insert (uuid backfill skipped — no UuidRegistry stub interaction).
+        $legacyInsert = null;
+        foreach ($statements as $call) {
+            if (str_contains($call['sql'], '`groups`')) {
+                $legacyInsert = $call;
+                break;
+            }
+        }
+        self::assertNotNull($legacyInsert, 'expected an insert into the legacy `groups` table');
+        self::assertStringContainsString('INSERT INTO `groups`', $legacyInsert['sql']);
+        self::assertStringContainsString('name = ?', $legacyInsert['sql']);
+        self::assertStringContainsString('user = ?', $legacyInsert['sql']);
+        self::assertSame(['Default', 'alice'], $legacyInsert['params']);
+    }
+
+    #[Test]
+    public function createSkipsLegacyGroupsInsertWhenAbsent(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 61;
+
+        $users = new class extends UserManager {
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+            }
+        };
+
+        $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'A',
+            'lname' => 'L',
+        ]);
+
+        foreach (SqlSpy::callsOf('sqlStatement') as $call) {
+            self::assertStringNotContainsString('`groups`', $call['sql']);
+        }
+    }
+
+    #[Test]
+    public function createSkipsAclRegistrationWhenGroupsAbsent(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 56;
+
+        $invoked = false;
+        $users = new class ($invoked) extends UserManager {
+            public function __construct(public bool &$invoked)
+            {
+            }
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+                $this->invoked = true;
+            }
+        };
+
+        $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'A',
+            'lname' => 'L',
+        ]);
+
+        self::assertFalse($invoked);
+    }
+
+    #[Test]
+    public function createRollsBackWhenAclRegistrationThrows(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 57;
+
+        $users = new class extends UserManager {
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+                throw new \RuntimeException('acl boom');
+            }
+        };
+
+        try {
+            $users->create([
+                'username' => 'alice',
+                'password' => 'pw',
+                'fname' => 'A',
+                'lname' => 'L',
+                'groups' => ['Administrators'],
+            ]);
+            self::fail('expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame('acl boom', $e->getMessage());
+        }
+
+        self::assertSame(1, SqlSpy::$beginCount);
+        self::assertSame(0, SqlSpy::$commitCount);
+        self::assertSame(1, SqlSpy::$rollbackCount);
+    }
+
+    #[Test]
     public function createSwallowsUuidRegistryFailure(): void
     {
         SqlSpy::$sqlInsertReturns[] = 17;

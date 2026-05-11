@@ -53,7 +53,7 @@ class CreateCommandTest extends TestCase
     }
 
     #[Test]
-    public function createsUserWithDefaults(): void
+    public function createsUserWithExplicitGroup(): void
     {
         $this->users->expects(self::once())
             ->method('create')
@@ -65,6 +65,8 @@ class CreateCommandTest extends TestCase
                 self::assertNull($spec['email']);
                 self::assertFalse($spec['authorized']);
                 self::assertTrue($spec['active']);
+                self::assertSame(['Clinicians'], $spec['groups']);
+                self::assertSame('Default', $spec['legacyGroup']);
                 return true;
             }))
             ->willReturn(42);
@@ -74,6 +76,7 @@ class CreateCommandTest extends TestCase
             '--password' => 'sekret',
             '--firstname' => 'Alice',
             '--lastname' => 'Liddell',
+            '--group' => ['Clinicians'],
         ]);
 
         self::assertSame(0, $exit);
@@ -82,7 +85,7 @@ class CreateCommandTest extends TestCase
     }
 
     #[Test]
-    public function passesAuthorizedAndEmailFlags(): void
+    public function passesAuthorizedAndEmailFlagsAndDefaultsGroupToAdministrators(): void
     {
         $this->users->expects(self::once())
             ->method('create')
@@ -90,6 +93,7 @@ class CreateCommandTest extends TestCase
                 self::assertSame('admin@example.com', $spec['email']);
                 self::assertTrue($spec['authorized']);
                 self::assertFalse($spec['active']);
+                self::assertSame(['Administrators'], $spec['groups']);
                 return true;
             }))
             ->willReturn(7);
@@ -102,6 +106,67 @@ class CreateCommandTest extends TestCase
             '--email' => 'admin@example.com',
             '--authorized' => true,
             '--active' => false,
+        ]);
+
+        self::assertSame(0, $exit);
+    }
+
+    #[Test]
+    public function failsWhenGroupOmittedAndNotAuthorized(): void
+    {
+        $this->users->expects(self::never())->method('create');
+
+        $exit = $this->tester->execute([
+            '--username' => 'alice',
+            '--password' => 'pw',
+            '--firstname' => 'A',
+            '--lastname' => 'L',
+        ]);
+
+        self::assertSame(1, $exit);
+        self::assertStringContainsString('--group is required', $this->tester->getDisplay());
+    }
+
+    #[Test]
+    public function passesExplicitLegacyGroup(): void
+    {
+        $this->users->expects(self::once())
+            ->method('create')
+            ->with(self::callback(function (array $spec): bool {
+                self::assertSame('Providers', $spec['legacyGroup']);
+                return true;
+            }))
+            ->willReturn(8);
+
+        $exit = $this->tester->execute([
+            '--username' => 'alice',
+            '--password' => 'pw',
+            '--firstname' => 'A',
+            '--lastname' => 'L',
+            '--group' => ['Clinicians'],
+            '--legacy-group' => 'Providers',
+        ]);
+
+        self::assertSame(0, $exit);
+    }
+
+    #[Test]
+    public function passesMultipleGroups(): void
+    {
+        $this->users->expects(self::once())
+            ->method('create')
+            ->with(self::callback(function (array $spec): bool {
+                self::assertSame(['Administrators', 'Clinicians'], $spec['groups']);
+                return true;
+            }))
+            ->willReturn(11);
+
+        $exit = $this->tester->execute([
+            '--username' => 'alice',
+            '--password' => 'pw',
+            '--firstname' => 'A',
+            '--lastname' => 'L',
+            '--group' => ['Administrators', 'Clinicians'],
         ]);
 
         self::assertSame(0, $exit);

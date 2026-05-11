@@ -65,6 +65,7 @@ Updates `users_secure.password`, stamps `last_update_password = NOW()`, and clea
 Create a new user.
 
 ```bash
+# Authorized provider — defaults to the Administrators ACL group.
 oce-manage-users.phar user:create \
   --username=alice \
   --password='sekret' \
@@ -73,9 +74,31 @@ oce-manage-users.phar user:create \
   --email=alice@example.com \
   --authorized \
   --active
+
+# Non-authorized user — must specify at least one --group.
+oce-manage-users.phar user:create \
+  --username=bob \
+  --password='sekret' \
+  --firstname=Bob \
+  --lastname=Brown \
+  --group=Clinicians
+
+# Multiple groups — repeat --group.
+oce-manage-users.phar user:create \
+  --username=carol \
+  --password='sekret' \
+  --firstname=Carol \
+  --lastname=Carter \
+  --group=Administrators \
+  --group=Clinicians
 ```
 
-Defaults: `--active` is on, `--authorized` is off. Inserts into both `users` and `users_secure` and backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available.
+Defaults: `--active` is on, `--authorized` is off. Inserts into `users` and `users_secure`, backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available, and performs both group registrations OpenEMR's auth flow requires:
+
+- **gAcl** (`gacl_aro` + `gacl_groups_aro_map`) via `AclExtended::setUserAro`, controlled by `--group=<title>` (repeatable). Required unless `--authorized` is set, in which case it defaults to `Administrators`.
+- **Legacy `groups` table** (the flat `(name, user)` mapping read by `UserService::getAuthGroupForUser` during auth) via `--legacy-group=<name>` (default `Default`). The auth flow rejects login with the same `error=1` redirect when this row is missing, even with a correct ACL ARO — it's a separate, older grouping system that OpenEMR still consults.
+
+Without both registrations the user has a valid credential but cannot log in.
 
 ### `user:list`
 
