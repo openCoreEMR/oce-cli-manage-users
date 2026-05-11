@@ -4,6 +4,8 @@ Standalone PHP CLI for managing OpenEMR users — what `bin/console openemr:user
 
 Distributed as a single PHAR. Runs against any OpenEMR install from `rel-702` through `master`.
 
+> **Privileges.** This CLI writes directly to the `users` and `users_secure` tables (and the `gacl_*` / `groups` tables when registering group membership). It bootstraps OpenEMR with `$ignoreAuth = true` and deliberately bypasses the OpenEMR ACL — there is no logged-in user and no permission check. Run it only as an operator who already has DB write access to the OpenEMR site, and treat each invocation the same way you'd treat direct SQL against those tables.
+
 ## Install
 
 Grab the PHAR from the [latest release](https://github.com/opencoreemr/oce-cli-manage-users/releases/latest) and drop it next to (or inside) the OpenEMR install:
