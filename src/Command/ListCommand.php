@@ -86,6 +86,9 @@ class ListCommand extends AbstractUserCommand
         if (is_scalar($value)) {
             return (string) $value;
         }
-        return '';
+        throw new ManageUsersException(sprintf(
+            'Unexpected non-scalar column value of type %s; ListCommand needs an updated formatter.',
+            get_debug_type($value),
+        ));
     }
 }
