@@ -36,8 +36,7 @@
         "rector/rector": "^2.0",
         "squizlabs/php_codesniffer": "^4.0"
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
+    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "OpenCoreEMR\\CLI\\ManageUsers\\": "src/"
