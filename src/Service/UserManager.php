@@ -78,6 +78,7 @@ class UserManager
      *     authorized?: bool,
      *     active?: bool,
      *     groups?: list<string>,
+     *     legacyGroup?: ?string,
      * } $spec
      */
     public function create(array $spec): int
@@ -141,6 +142,19 @@ class UserManager
                     $username,
                     $spec['fname'],
                     $spec['lname']
+                );
+            }
+
+            $legacyGroup = $spec['legacyGroup'] ?? null;
+            if ($legacyGroup !== null && $legacyGroup !== '') {
+                // Legacy `groups` table (id, name, user) — separate from the
+                // gAcl tables. AuthUtils::confirmUserPassword() rejects login
+                // when UserService::getAuthGroupForUser() finds no row here,
+                // even with a valid gAcl ARO. Mirror the upstream insert at
+                // interface/usergroup/usergroup_admin.php:443.
+                sqlStatement(
+                    "INSERT INTO `groups` SET name = ?, user = ?",
+                    [$legacyGroup, $username]
                 );
             }
         } catch (\Throwable $e) {

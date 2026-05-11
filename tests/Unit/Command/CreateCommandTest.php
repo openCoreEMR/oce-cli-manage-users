@@ -66,6 +66,7 @@ class CreateCommandTest extends TestCase
                 self::assertFalse($spec['authorized']);
                 self::assertTrue($spec['active']);
                 self::assertSame(['Clinicians'], $spec['groups']);
+                self::assertSame('Default', $spec['legacyGroup']);
                 return true;
             }))
             ->willReturn(42);
@@ -124,6 +125,29 @@ class CreateCommandTest extends TestCase
 
         self::assertSame(1, $exit);
         self::assertStringContainsString('--group is required', $this->tester->getDisplay());
+    }
+
+    #[Test]
+    public function passesExplicitLegacyGroup(): void
+    {
+        $this->users->expects(self::once())
+            ->method('create')
+            ->with(self::callback(function (array $spec): bool {
+                self::assertSame('Providers', $spec['legacyGroup']);
+                return true;
+            }))
+            ->willReturn(8);
+
+        $exit = $this->tester->execute([
+            '--username' => 'alice',
+            '--password' => 'pw',
+            '--firstname' => 'A',
+            '--lastname' => 'L',
+            '--group' => ['Clinicians'],
+            '--legacy-group' => 'Providers',
+        ]);
+
+        self::assertSame(0, $exit);
     }
 
     #[Test]

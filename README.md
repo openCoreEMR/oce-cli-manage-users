@@ -93,9 +93,12 @@ oce-manage-users.phar user:create \
   --group=Clinicians
 ```
 
-Defaults: `--active` is on, `--authorized` is off. Inserts into both `users` and `users_secure`, backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available, and registers the user in OpenEMR's ACL system (`gacl_aro` + `gacl_groups_aro_map`) via `AclExtended::setUserAro` so they can log in immediately.
+Defaults: `--active` is on, `--authorized` is off. Inserts into `users` and `users_secure`, backfills `users.uuid` if `OpenEMR\Common\Uuid\UuidRegistry` is available, and performs both group registrations OpenEMR's auth flow requires:
 
-`--group=<title>` is repeatable. It is required unless `--authorized` is set, in which case it defaults to `Administrators`. Without this step the user has a valid credential but cannot log in — the ACL layer rejects them.
+- **gAcl** (`gacl_aro` + `gacl_groups_aro_map`) via `AclExtended::setUserAro`, controlled by `--group=<title>` (repeatable). Required unless `--authorized` is set, in which case it defaults to `Administrators`.
+- **Legacy `groups` table** (the flat `(name, user)` mapping read by `UserService::getAuthGroupForUser` during auth) via `--legacy-group=<name>` (default `Default`). The auth flow rejects login with the same `error=1` redirect when this row is missing, even with a correct ACL ARO — it's a separate, older grouping system that OpenEMR still consults.
+
+Without both registrations the user has a valid credential but cannot log in.
 
 ### `user:list`
 

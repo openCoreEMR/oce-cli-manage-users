@@ -47,6 +47,14 @@ class CreateCommand extends AbstractUserCommand
                 InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'ACL group title to add the user to (repeatable). Required unless --authorized is set,'
                 . ' in which case it defaults to Administrators.'
+            )
+            ->addOption(
+                'legacy-group',
+                null,
+                InputOption::VALUE_REQUIRED,
+                "Name for the row inserted into the legacy `groups` table (default: Default)."
+                . ' Auth rejects login when this row is missing, even with a valid ACL ARO.',
+                'Default'
             );
     }
 
@@ -64,6 +72,7 @@ class CreateCommand extends AbstractUserCommand
             'authorized' => $authorized,
             'active' => (bool) $input->getOption('active'),
             'groups' => $groups,
+            'legacyGroup' => $this->requiredString($input, 'legacy-group'),
         ];
 
         $userId = $this->users->create($spec);

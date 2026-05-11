@@ -273,6 +273,70 @@ class UserManagerTest extends TestCase
     }
 
     #[Test]
+    public function createInsertsLegacyGroupsRowWhenLegacyGroupProvided(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 60;
+
+        $users = new class extends UserManager {
+            // Skip the real ACL stack — covered separately above.
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+            }
+        };
+
+        $id = $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'A',
+            'lname' => 'L',
+            'groups' => ['Administrators'],
+            'legacyGroup' => 'Default',
+        ]);
+
+        self::assertSame(60, $id);
+
+        $statements = SqlSpy::callsOf('sqlStatement');
+        // users_secure + legacy `groups` insert (uuid backfill skipped — no UuidRegistry stub interaction).
+        $legacyInsert = null;
+        foreach ($statements as $call) {
+            if (str_contains($call['sql'], '`groups`')) {
+                $legacyInsert = $call;
+                break;
+            }
+        }
+        self::assertNotNull($legacyInsert, 'expected an insert into the legacy `groups` table');
+        self::assertStringContainsString('INSERT INTO `groups`', $legacyInsert['sql']);
+        self::assertStringContainsString('name = ?', $legacyInsert['sql']);
+        self::assertStringContainsString('user = ?', $legacyInsert['sql']);
+        self::assertSame(['Default', 'alice'], $legacyInsert['params']);
+    }
+
+    #[Test]
+    public function createSkipsLegacyGroupsInsertWhenAbsent(): void
+    {
+        SqlSpy::$sqlInsertReturns[] = 61;
+
+        $users = new class extends UserManager {
+            protected function registerAclGroups(array $groups, string $username, string $fname, string $lname): void
+            {
+                unset($groups, $username, $fname, $lname);
+            }
+        };
+
+        $users->create([
+            'username' => 'alice',
+            'password' => 'pw',
+            'fname' => 'A',
+            'lname' => 'L',
+        ]);
+
+        foreach (SqlSpy::callsOf('sqlStatement') as $call) {
+            self::assertStringNotContainsString('`groups`', $call['sql']);
+        }
+    }
+
+    #[Test]
     public function createSkipsAclRegistrationWhenGroupsAbsent(): void
     {
         SqlSpy::$sqlInsertReturns[] = 56;
