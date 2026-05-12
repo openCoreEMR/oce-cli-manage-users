@@ -395,6 +395,35 @@ class UserManagerTest extends TestCase
     }
 
     #[Test]
+    public function createRollsBackWhenQueryUtilsThrowsSqlQueryException(): void
+    {
+        // Issue #8: the global sqlInsert/sqlStatement helpers route SQL errors
+        // through HelpfulDie() which calls exit() on many builds, so the catch
+        // (\Throwable) rollback never fires. UserManager uses the throwing
+        // QueryUtils variants for exactly this reason — verify the rollback
+        // path actually runs when those throw.
+        SqlSpy::$throwOnNextSql = 'duplicate key 1062';
+
+        try {
+            $this->users->create([
+                'username' => 'alice',
+                'password' => 'pw',
+                'fname' => 'A',
+                'lname' => 'L',
+            ]);
+            self::fail('expected SqlQueryException');
+        } catch (\OpenEMR\Common\Database\SqlQueryException $e) {
+            self::assertStringContainsString('duplicate key 1062', $e->getMessage());
+        }
+
+        self::assertSame(1, SqlSpy::$beginCount);
+        self::assertSame(0, SqlSpy::$commitCount);
+        self::assertSame(1, SqlSpy::$rollbackCount);
+        // users_secure insert never ran because the users insert blew up.
+        self::assertCount(0, SqlSpy::callsOf('sqlStatement'));
+    }
+
+    #[Test]
     public function createSwallowsUuidRegistryFailure(): void
     {
         SqlSpy::$sqlInsertReturns[] = 17;

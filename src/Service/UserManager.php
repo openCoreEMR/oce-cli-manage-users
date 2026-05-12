@@ -21,6 +21,7 @@ namespace OpenCoreEMR\CLI\ManageUsers\Service;
 use OpenCoreEMR\CLI\ManageUsers\Exception\ManageUsersException;
 use OpenCoreEMR\CLI\ManageUsers\Exception\UserAlreadyExistsException;
 use OpenCoreEMR\CLI\ManageUsers\Exception\UserNotFoundException;
+use OpenEMR\Common\Database\QueryUtils;
 
 class UserManager
 {
@@ -103,12 +104,17 @@ class UserManager
         // Two-table create (users + users_secure, plus optional uuid backfill)
         // wrapped in a transaction so a failure on the secondary writes doesn't
         // leave an orphaned users row with no credential.
+        //
+        // Use QueryUtils::sqlInsert / sqlStatementThrowException, not the global
+        // sqlInsert / sqlStatement helpers: those route SQL errors through
+        // HelpfulDie() which calls exit() on many builds, so the catch below
+        // would never fire and the transaction would never roll back.
         sqlBeginTrans();
         try {
             // Mirror the field shape from interface/usergroup/usergroup_admin.php:
             // password column is the literal string 'NoLongerUsed'; the real hash
             // lives in users_secure.password.
-            $userId = sqlInsert(
+            $userId = QueryUtils::sqlInsert(
                 "INSERT INTO users SET"
                 . " username = ?,"
                 . " password = 'NoLongerUsed',"
@@ -120,11 +126,11 @@ class UserManager
                 [$username, $spec['fname'], $spec['lname'], $email, $authorized, $active]
             );
 
-            if (!is_int($userId) || $userId <= 0) {
+            if ($userId <= 0) {
                 throw new ManageUsersException("Failed to insert into users for {$username}");
             }
 
-            sqlStatement(
+            QueryUtils::sqlStatementThrowException(
                 "INSERT INTO users_secure SET"
                 . " id = ?,"
                 . " username = ?,"
@@ -152,7 +158,7 @@ class UserManager
                 // when UserService::getAuthGroupForUser() finds no row here,
                 // even with a valid gAcl ARO. Mirror the upstream insert at
                 // interface/usergroup/usergroup_admin.php:443.
-                sqlStatement(
+                QueryUtils::sqlStatementThrowException(
                     "INSERT INTO `groups` SET name = ?, user = ?",
                     [$legacyGroup, $username]
                 );
@@ -302,7 +308,14 @@ class UserManager
         try {
             $registry = \OpenEMR\Common\Uuid\UuidRegistry::getRegistryForTable('users');
             $uuid = $registry->createUuid();
-            sqlStatement("UPDATE users SET uuid = ? WHERE id = ?", [$uuid, $userId]);
+            // Throwing variant: this runs inside create()'s transaction, and a
+            // HelpfulDie() exit() here would skip both this catch and the
+            // outer rollback. SqlQueryException is a Throwable so it lands
+            // here and stays non-fatal.
+            QueryUtils::sqlStatementThrowException(
+                "UPDATE users SET uuid = ? WHERE id = ?",
+                [$uuid, $userId]
+            );
         } catch (\Throwable) {
             // Non-fatal; row is otherwise valid without a UUID.
         }
