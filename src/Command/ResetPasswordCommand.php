@@ -152,12 +152,11 @@ class ResetPasswordCommand extends AbstractUserCommand
         return implode('', $chars);
     }
 
+    /**
+     * @param non-empty-string $alphabet
+     */
     private function pick(string $alphabet): string
     {
-        $max = strlen($alphabet) - 1;
-        if ($max < 0) {
-            throw new \LogicException('pick() requires a non-empty alphabet');
-        }
-        return $alphabet[random_int(0, $max)];
+        return $alphabet[random_int(0, strlen($alphabet) - 1)];
     }
 }
