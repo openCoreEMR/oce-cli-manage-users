@@ -4,24 +4,23 @@ on:
   push:
     branches:
     - main
+    paths:
+    - '**.php'
+    - composer.json
+    - .github/workflows/php-syntax-check.yml
   pull_request:
     branches:
     - main
+    paths:
+    - '**.php'
+    - composer.json
+    - .github/workflows/php-syntax-check.yml
 
 jobs:
-  syntax:
-    name: Check PHP Syntax
-    runs-on: ubuntu-24.04
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        coverage: none
-
-    - name: Check PHP syntax
-      run: find src bin -name "*.php" -exec php -l {} \;
+  php-syntax-check:
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    with:
+      name: PHP Syntax Check
+      run: composer php-lint
+      install-deps: false
+      php-version: '8.2'
