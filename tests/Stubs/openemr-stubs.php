@@ -22,3 +22,11 @@ if (!class_exists(\OpenEMR\Common\Auth\AuthHash::class, false)) {
 if (!class_exists(\OpenEMR\Common\Uuid\UuidRegistry::class, false)) {
     require __DIR__ . '/OpenEMR/UuidRegistry.php';
 }
+
+if (!class_exists(\OpenEMR\Common\Database\SqlQueryException::class, false)) {
+    require __DIR__ . '/OpenEMR/SqlQueryException.php';
+}
+
+if (!class_exists(\OpenEMR\Common\Database\QueryUtils::class, false)) {
+    require __DIR__ . '/OpenEMR/QueryUtils.php';
+}

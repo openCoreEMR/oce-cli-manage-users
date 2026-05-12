@@ -37,6 +37,14 @@ class SqlSpy
     public static bool $uuidThrows = false;
     public static ?string $uuidValue = null;
 
+    /**
+     * If non-null, the next QueryUtils::sqlInsert / sqlStatementThrowException
+     * stub call records itself and then throws SqlQueryException with this
+     * string as the sqlError. Simulates the OpenEMR exit()-via-HelpfulDie
+     * path the throwing variants exist to avoid.
+     */
+    public static ?string $throwOnNextSql = null;
+
     /** @var list<string> */
     public static array $authHashCalls = [];
 
@@ -51,6 +59,7 @@ class SqlSpy
         self::$rollbackCount = 0;
         self::$uuidThrows = false;
         self::$uuidValue = null;
+        self::$throwOnNextSql = null;
         self::$authHashCalls = [];
     }
 
