@@ -6,8 +6,8 @@
  * Centralizes the --openemr-path / --site options, the OpenEMR bootstrap, and
  * the boilerplate that turns any thrown Throwable (including unexpected
  * programming errors and OpenEMR runtime failures) into a non-zero exit with
- * a clear stderr message — appropriate for a CLI where an uncaught stack trace
- * to the operator's terminal would be worse than a one-line summary.
+ * a clear stderr message. Verbosity (-v or higher) additionally renders the
+ * full exception with file, line, and stack trace.
  *
  * @package   OpenCoreEMR\CLI\ManageUsers
  * @link      https://opencoreemr.com
@@ -78,6 +78,9 @@ abstract class AbstractUserCommand extends Command
             return $this->doExecute($input, $io);
         } catch (\Throwable $e) {
             $io->error($e->getMessage());
+            if ($output->isVerbose()) {
+                $this->getApplication()?->renderThrowable($e, $output);
+            }
             return Command::FAILURE;
         }
     }
