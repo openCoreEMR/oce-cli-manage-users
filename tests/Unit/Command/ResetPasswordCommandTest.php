@@ -16,7 +16,7 @@ namespace OpenCoreEMR\CLI\ManageUsers\Tests\Unit\Command;
 
 use OpenCoreEMR\CLI\ManageUsers\Command\ResetPasswordCommand;
 use OpenCoreEMR\CLI\ManageUsers\Service\OpenEMRConnector;
-use OpenCoreEMR\CLI\ManageUsers\Service\PasswordPolicy;
+use OpenCoreEMR\CLI\ManageUsers\Service\PasswordPolicyInterface;
 use OpenCoreEMR\CLI\ManageUsers\Service\UserManager;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -28,14 +28,14 @@ class ResetPasswordCommandTest extends TestCase
 {
     private OpenEMRConnector&MockObject $connector;
     private UserManager&MockObject $users;
-    private PasswordPolicy&MockObject $policy;
+    private PasswordPolicyInterface&MockObject $policy;
     private CommandTester $tester;
 
     protected function setUp(): void
     {
         $this->connector = $this->createMock(OpenEMRConnector::class);
         $this->users = $this->createMock(UserManager::class);
-        $this->policy = $this->createMock(PasswordPolicy::class);
+        $this->policy = $this->createMock(PasswordPolicyInterface::class);
 
         $command = new ResetPasswordCommand($this->connector, $this->users, $this->policy);
         $app = new Application();

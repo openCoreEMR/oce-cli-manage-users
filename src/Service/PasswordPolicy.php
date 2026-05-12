@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OpenCoreEMR\CLI\ManageUsers\Service;
 
-class PasswordPolicy
+final class PasswordPolicy implements PasswordPolicyInterface
 {
     /**
      * @return string|null Null on pass; an explanatory message on fail.

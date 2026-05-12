@@ -17,6 +17,7 @@ namespace OpenCoreEMR\CLI\ManageUsers\Command;
 use OpenCoreEMR\CLI\ManageUsers\Exception\ManageUsersException;
 use OpenCoreEMR\CLI\ManageUsers\Service\OpenEMRConnector;
 use OpenCoreEMR\CLI\ManageUsers\Service\PasswordPolicy;
+use OpenCoreEMR\CLI\ManageUsers\Service\PasswordPolicyInterface;
 use OpenCoreEMR\CLI\ManageUsers\Service\UserManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,12 +37,12 @@ class ResetPasswordCommand extends AbstractUserCommand
     // Shell-safe symbols: no quotes, backslash, backtick, $, parens, <, >, |, ;, &, space.
     private const RANDOM_SYMBOL = '!@#%^*-_=+?';
 
-    private readonly PasswordPolicy $policy;
+    private readonly PasswordPolicyInterface $policy;
 
     public function __construct(
         ?OpenEMRConnector $connector = null,
         ?UserManager $users = null,
-        ?PasswordPolicy $policy = null,
+        ?PasswordPolicyInterface $policy = null,
     ) {
         parent::__construct($connector, $users);
         $this->policy = $policy ?? new PasswordPolicy();
