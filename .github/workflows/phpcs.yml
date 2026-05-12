@@ -4,36 +4,28 @@ on:
   push:
     branches:
     - main
+    paths:
+    - '**.php'
+    - '.phpcs.xml*'
+    - 'phpcs.xml*'
+    - composer.json
+    - composer.lock
+    - .github/workflows/phpcs.yml
   pull_request:
     branches:
     - main
+    paths:
+    - '**.php'
+    - '.phpcs.xml*'
+    - 'phpcs.xml*'
+    - composer.json
+    - composer.lock
+    - .github/workflows/phpcs.yml
 
 jobs:
   phpcs:
-    name: Run PHP CodeSniffer
-    runs-on: ubuntu-24.04
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        coverage: none
-        tools: composer:v2
-
-    - name: Cache Composer dependencies
-      uses: actions/cache@v5
-      with:
-        path: vendor
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
-        restore-keys: |
-          ${{ runner.os }}-composer-
-
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
-
-    - name: Run PHP CodeSniffer
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    with:
+      name: Run PHP CodeSniffer
       run: composer phpcs
+      php-version: '8.2'

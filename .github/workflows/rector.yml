@@ -4,36 +4,26 @@ on:
   push:
     branches:
     - main
+    paths:
+    - '**.php'
+    - rector.php
+    - composer.json
+    - composer.lock
+    - .github/workflows/rector.yml
   pull_request:
     branches:
     - main
+    paths:
+    - '**.php'
+    - rector.php
+    - composer.json
+    - composer.lock
+    - .github/workflows/rector.yml
 
 jobs:
   rector:
-    name: Run Rector (dry-run)
-    runs-on: ubuntu-24.04
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        coverage: none
-        tools: composer:v2
-
-    - name: Cache Composer dependencies
-      uses: actions/cache@v5
-      with:
-        path: vendor
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
-        restore-keys: |
-          ${{ runner.os }}-composer-
-
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-interaction
-
-    - name: Run Rector (dry-run)
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    with:
+      name: Run Rector (dry-run)
       run: composer rector
+      php-version: '8.2'
