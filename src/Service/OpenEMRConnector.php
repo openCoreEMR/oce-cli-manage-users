@@ -22,6 +22,11 @@ use OpenCoreEMR\CLI\ManageUsers\Exception\OpenEMRConnectorException;
 
 class OpenEMRConnector
 {
+    // The D modifier makes $ match end-of-string only — without it, "site\n"
+    // would slip past, since $ defaults to "end-of-string OR just before a
+    // trailing newline."
+    private const SITE_PATTERN = '/^[A-Za-z0-9_-]+$/D';
+
     private string $openemrPath = '';
     private string $site = 'default';
     private bool $initialized = false;
@@ -32,37 +37,78 @@ class OpenEMRConnector
             return;
         }
 
-        // Site name becomes a filesystem path segment (sites/<site>/sqlconf.php)
-        // and is also written into $_GET. Restrict to a safe character set
-        // before either use to prevent path traversal during bootstrap.
-        if (preg_match('/^[A-Za-z0-9_-]+$/', $site) !== 1) {
-            throw new OpenEMRConnectorException(
-                "Invalid --site value; must match [A-Za-z0-9_-]+, got: {$site}"
-            );
-        }
+        $this->validateSite($site);
 
         $this->openemrPath = rtrim($openemrPath, '/');
         $this->site = $site;
 
-        $globalsPath = $this->openemrPath . '/interface/globals.php';
+        $globalsPath = $this->resolveGlobalsPath($this->openemrPath);
+
+        $this->prepareCliEnvironment($site);
+
+        // Inline, not extracted: globals.php reads $ignoreAuth and
+        // $sessionAllowWrite during the require and may touch other locals,
+        // so we keep the same local scope as the original implementation.
+        $ignoreAuth = true;
+        $sessionAllowWrite = true;
+        require_once $globalsPath;
+
+        $this->verifyDatabase();
+
+        $this->initialized = true;
+    }
+
+    /**
+     * Validate the --site value.
+     *
+     * Site name becomes a filesystem path segment (sites/<site>/sqlconf.php)
+     * and is also written into $_GET. Restrict to a safe character set
+     * before either use to prevent path traversal during bootstrap.
+     */
+    protected function validateSite(string $site): void
+    {
+        if (preg_match(self::SITE_PATTERN, $site) !== 1) {
+            throw new OpenEMRConnectorException(
+                "Invalid --site value; must match [A-Za-z0-9_-]+, got: {$site}"
+            );
+        }
+    }
+
+    /**
+     * Locate interface/globals.php under the given OpenEMR root.
+     *
+     * @return string Absolute path to globals.php (verified to exist).
+     */
+    protected function resolveGlobalsPath(string $openemrPath): string
+    {
+        $globalsPath = rtrim($openemrPath, '/') . '/interface/globals.php';
         if (!file_exists($globalsPath)) {
             throw new OpenEMRConnectorException("OpenEMR globals.php not found at: {$globalsPath}");
         }
 
-        // globals.php reads $_SERVER values during the require; set safe CLI defaults.
+        return $globalsPath;
+    }
+
+    /**
+     * Populate $_SERVER and $_GET so globals.php can be required from a CLI
+     * context. globals.php reads these during the require and dies if they
+     * are missing.
+     */
+    protected function prepareCliEnvironment(string $site): void
+    {
         $_SERVER['HTTP_HOST'] ??= 'localhost';
         $_SERVER['REQUEST_URI'] ??= '/';
         $_SERVER['SCRIPT_NAME'] ??= '/cli.php';
         $_SERVER['SERVER_NAME'] ??= 'localhost';
 
         $_GET['site'] = $site;
+    }
 
-        // Must be set BEFORE the require — globals.php consumes them during inclusion.
-        $ignoreAuth = true;
-        $sessionAllowWrite = true;
-
-        require_once $globalsPath;
-
+    /**
+     * Confirm the OpenEMR database connection came up after bootstrap.
+     */
+    protected function verifyDatabase(): void
+    {
         if (!isset($GLOBALS['dbh']) || $GLOBALS['dbh'] === false) {
             throw new OpenEMRConnectorException(
                 "OpenEMR database connection failed; check sqlconf.php and that MySQL is reachable"
@@ -82,8 +128,6 @@ class OpenEMRConnector
                 $e
             );
         }
-
-        $this->initialized = true;
     }
 
     public function isInitialized(): bool
