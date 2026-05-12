@@ -22,6 +22,7 @@ namespace OpenCoreEMR\CLI\ManageUsers\Command;
 
 use OpenCoreEMR\CLI\ManageUsers\Service\OpenEMRConnector;
 use OpenCoreEMR\CLI\ManageUsers\Service\UserManager;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -79,7 +80,7 @@ abstract class AbstractUserCommand extends Command
             return $this->doExecute($input, $io);
         } catch (\Throwable $e) {
             $app = $this->getApplication();
-            if ($output->isVerbose() && $app !== null) {
+            if ($output->isVerbose() && $app instanceof Application) {
                 $errOutput = $output instanceof ConsoleOutputInterface
                     ? $output->getErrorOutput()
                     : $output;
