@@ -6,8 +6,8 @@
  * Centralizes the --openemr-path / --site options, the OpenEMR bootstrap, and
  * the boilerplate that turns any thrown Throwable (including unexpected
  * programming errors and OpenEMR runtime failures) into a non-zero exit with
- * a clear stderr message — appropriate for a CLI where an uncaught stack trace
- * to the operator's terminal would be worse than a one-line summary.
+ * a clear stderr message. Verbosity (-v or higher) additionally renders the
+ * full exception with file, line, and stack trace.
  *
  * @package   OpenCoreEMR\CLI\ManageUsers
  * @link      https://opencoreemr.com
@@ -22,9 +22,11 @@ namespace OpenCoreEMR\CLI\ManageUsers\Command;
 
 use OpenCoreEMR\CLI\ManageUsers\Service\OpenEMRConnector;
 use OpenCoreEMR\CLI\ManageUsers\Service\UserManager;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -77,7 +79,15 @@ abstract class AbstractUserCommand extends Command
             $this->connector->initialize($openemrPath, $site);
             return $this->doExecute($input, $io);
         } catch (\Throwable $e) {
-            $io->error($e->getMessage());
+            $app = $this->getApplication();
+            if ($output->isVerbose() && $app instanceof Application) {
+                $errOutput = $output instanceof ConsoleOutputInterface
+                    ? $output->getErrorOutput()
+                    : $output;
+                $app->renderThrowable($e, $errOutput);
+            } else {
+                $io->error($e->getMessage());
+            }
             return Command::FAILURE;
         }
     }
