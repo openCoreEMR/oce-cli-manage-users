@@ -16,7 +16,7 @@ on:
 
 jobs:
   composer-normalize:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.5
     with:
       name: Normalize composer.json (check)
       run: composer normalize --dry-run

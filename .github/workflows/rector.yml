@@ -22,7 +22,7 @@ on:
 
 jobs:
   rector:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.5
     with:
       name: Run Rector (dry-run)
       run: composer rector

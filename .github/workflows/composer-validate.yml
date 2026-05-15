@@ -16,7 +16,7 @@ on:
 
 jobs:
   composer-validate:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.4
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.5
     with:
       name: Validate composer.json
       run: composer validate --strict
