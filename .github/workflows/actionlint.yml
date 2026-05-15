@@ -16,4 +16,4 @@ on:
 
 jobs:
   actionlint:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/actionlint.yml@0.0.4
+    uses: openCoreEMR/github-workflows-public/.github/workflows/actionlint.yml@0.0.5
