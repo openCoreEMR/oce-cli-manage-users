@@ -22,4 +22,4 @@ on:
 
 jobs:
   dclint:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/dclint.yml@0.0.6
+    uses: openCoreEMR/github-workflows-public/.github/workflows/dclint.yml@1.0.0
