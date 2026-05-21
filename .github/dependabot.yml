@@ -22,3 +22,10 @@ updates:
       - github-actions
     commit-message:
       prefix: chore(ci)
+    groups:
+      github-workflows-public:
+        patterns:
+          - "openCoreEMR/github-workflows-public/*"
+      github-workflows-internal:
+        patterns:
+          - "openCoreEMR/github-workflows-internal/*"
