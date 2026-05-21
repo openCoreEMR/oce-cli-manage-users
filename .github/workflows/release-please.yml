@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   release-please:
-    uses: opencoreemr/github-workflows-public/.github/workflows/release-please-reusable.yml@1.0.0
+    uses: openCoreEMR/github-workflows-public/.github/workflows/release-please-reusable.yml@1.0.0
     permissions:
       contents: write
       pull-requests: write

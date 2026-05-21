@@ -25,7 +25,7 @@ updates:
     groups:
       github-workflows-public:
         patterns:
-          - "*/github-workflows-public/*"
+          - "openCoreEMR/github-workflows-public/*"
       github-workflows-internal:
         patterns:
-          - "*/github-workflows-internal/*"
+          - "openCoreEMR/github-workflows-internal/*"
