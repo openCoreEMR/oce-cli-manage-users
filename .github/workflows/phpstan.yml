@@ -26,7 +26,7 @@ on:
 
 jobs:
   phpstan:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@0.0.6
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.0.0
     with:
       name: Run PHPStan
       run: composer phpstan
