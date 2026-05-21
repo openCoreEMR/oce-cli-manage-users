@@ -8,4 +8,4 @@ jobs:
   conventional-pr-title:
     permissions:
       pull-requests: read
-    uses: openCoreEMR/github-workflows-public/.github/workflows/conventional-pr-title.yml@0.0.6
+    uses: openCoreEMR/github-workflows-public/.github/workflows/conventional-pr-title.yml@1.0.0
