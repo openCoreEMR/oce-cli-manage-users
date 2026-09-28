@@ -230,7 +230,8 @@ class UserManager
         $rows = [];
         while (($row = sqlFetchArray($result)) !== false) {
             if (is_array($row)) {
-                $rows[] = $row;
+                // Keep the column-name keys; narrows the row to array<string, mixed>.
+                $rows[] = array_filter($row, is_string(...), ARRAY_FILTER_USE_KEY);
             }
         }
         return $rows;
