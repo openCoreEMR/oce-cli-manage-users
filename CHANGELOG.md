@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/openCoreEMR/oce-cli-manage-users/compare/0.0.2...0.0.3) (2026-09-29)
+
+
+### Bug Fixes
+
+* **phpstan:** narrow listUsers row keys to string ([#61](https://github.com/openCoreEMR/oce-cli-manage-users/issues/61)) ([56f2b03](https://github.com/openCoreEMR/oce-cli-manage-users/commit/56f2b036fbe61ecd2dfbf63218a54312148247ad))
+
 ## [0.0.2](https://github.com/openCoreEMR/oce-cli-manage-users/compare/0.0.1...0.0.2) (2026-05-21)
 
 
