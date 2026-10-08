@@ -10,7 +10,7 @@ cd oce-cli-manage-users
 composer install
 ```
 
-To exercise the CLI against a real OpenEMR install in Docker, see the `task dev:start` workflow in `README.md` and the architecture notes in `CLAUDE.md`.
+To exercise the CLI against a real OpenEMR install in Docker, see the `task dev:start` workflow in `README.md` and the architecture notes in `AGENTS.md`.
 
 ## Running checks
 

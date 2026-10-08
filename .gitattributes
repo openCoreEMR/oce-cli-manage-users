@@ -13,6 +13,7 @@
 /rector.php         export-ignore
 /Taskfile.yml       export-ignore
 /CONTRIBUTING.md    export-ignore
+/AGENTS.md          export-ignore
 /CLAUDE.md          export-ignore
 /release-please-config.json     export-ignore
 /.release-please-manifest.json  export-ignore
