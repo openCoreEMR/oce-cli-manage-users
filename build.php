@@ -55,7 +55,7 @@ try {
     $phar->startBuffering();
 
     echo "Adding source files...\n";
-    $excludedNames = ['build', 'tests', 'tools', '.git', '.github', '.claude', '.phpunit.cache', 'build.php'];
+    $excludedNames = ['build', 'tests', 'tools', '.git', '.github', '.claude', '.phpunit.cache', 'build.php', 'AGENTS.md', 'CLAUDE.md'];
     $iterator = new RecursiveIteratorIterator(
         new RecursiveCallbackFilterIterator(
             new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS),
