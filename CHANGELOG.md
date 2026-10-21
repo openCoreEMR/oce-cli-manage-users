@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.3](https://github.com/openCoreEMR/oce-cli-manage-users/compare/0.0.2...0.0.3) (2026-10-21)
+
+
+### Bug Fixes
+
+* **phpstan:** narrow listUsers row keys to string ([#61](https://github.com/openCoreEMR/oce-cli-manage-users/issues/61)) ([56f2b03](https://github.com/openCoreEMR/oce-cli-manage-users/commit/56f2b036fbe61ecd2dfbf63218a54312148247ad))
+
+
+### Documentation
+
+* move agent instructions to AGENTS.md ([32dc36e](https://github.com/openCoreEMR/oce-cli-manage-users/commit/32dc36e87ed2240c24bf4cd3c9d9e63a08e20392))
+
+
+### Build System
+
+* leave AGENTS.md and CLAUDE.md out of the PHAR ([bea2fdb](https://github.com/openCoreEMR/oce-cli-manage-users/commit/bea2fdbb15922a94e581330da06f9c2479da8e76))
+
 ## [0.0.2](https://github.com/openCoreEMR/oce-cli-manage-users/compare/0.0.1...0.0.2) (2026-05-21)
 
 
