@@ -18,7 +18,7 @@ on:
 
 jobs:
   php-syntax-check:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.1.1
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.1.2
     with:
       name: PHP Syntax Check
       run: composer php-lint
