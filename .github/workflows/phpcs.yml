@@ -24,7 +24,7 @@ on:
 
 jobs:
   phpcs:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.1.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.2.1
     with:
       name: Run PHP CodeSniffer
       run: composer phpcs
