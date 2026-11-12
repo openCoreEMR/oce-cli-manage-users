@@ -10,7 +10,7 @@ on:
 
 jobs:
   phpunit:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@1.2.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-tests.yml@1.2.3
     permissions:
       contents: read
     with:
