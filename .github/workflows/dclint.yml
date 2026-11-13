@@ -22,6 +22,6 @@ on:
 
 jobs:
   dclint:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/dclint.yml@1.2.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/dclint.yml@1.2.3
     permissions:
       contents: read

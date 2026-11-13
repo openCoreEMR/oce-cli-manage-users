@@ -16,7 +16,7 @@ on:
 
 jobs:
   composer-normalize:
-    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.2.2
+    uses: openCoreEMR/github-workflows-public/.github/workflows/php-composer-script.yml@1.2.3
     permissions:
       contents: read
     with:
